@@ -21,7 +21,7 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 
 # Cuộn xuống trang để tải thêm dữ liệu
 last_height = driver.execute_script("return document.documentElement.scrollHeight")
-driver.get('https://tuoitre.vn/the-gioi.htm')
+driver.get('https://tuoitre.vn/the-gioi/trang-180.htm')
 sl = 0
 
 max_clicks = 40  # Số lần nhấn tối đa

@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # URL của bài báo (thay đổi thành URL của bài báo bạn muốn lấy nội dung)
-url = "https://tuoitre.vn/tong-bi-thu-chu-tich-nuoc-to-lam-tham-truong-mang-ten-chu-tich-ho-chi-minh-tai-mong-co-20241001102726334.htm"
+url = "https://tuoitre.vn/tai-lien-hiep-quoc-iran-to-israel-dung-bom-nang-hon-2-000kg-cua-my-de-khong-kich-lebanon-20240928064428659.htm"
 
 # Gửi yêu cầu đến URL
 response = requests.get(url)
