@@ -72,7 +72,7 @@ driver.get('https://tuoitre.vn/the-gioi.htm')
 last_height = driver.execute_script("return document.body.scrollHeight")
 
 sl = 0
-max_clicks = 60  # Số lần nhấn tối đa
+max_clicks = 40  # Số lần nhấn tối đa
 
 while True:
     # Cuộn xuống
@@ -111,7 +111,7 @@ articles = driver.find_elements(By.CSS_SELECTOR, 'a.box-category-link-with-avata
     
 
 # Lưu vào tệp CSV
-with open('output.csv', mode='w', newline='', encoding='utf-8') as file:
+with open('1_output.csv', mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
     writer.writerow(['Text', 'Link'])
     
@@ -126,21 +126,3 @@ with open('output.csv', mode='w', newline='', encoding='utf-8') as file:
 # Đóng trình duyệt
 driver.quit()
 
-# Lấy thông tin chi tiết từ các bài báo
-with open('output.csv', mode='r', newline='', encoding='utf-8') as file:
-    reader = csv.reader(file)
-    next(reader)  # Bỏ qua dòng tiêu đề
-
-    with open('output_details.csv', mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        writer.writerow(['Title', 'Link', 'Category', 'Summary', 'Author', 'Publish Date', 'Content'])
-        
-        for row in reader:
-            title, link = row
-            details = get_details(link)
-            if details:
-                print(f"Title: {title}, Link: {link}")
-                print(details)
-                writer.writerow([title, link, details['category'], details['summary'], details['author'], details['publish_date'], details['content']])
-            else:
-                print(f"Không thể lấy thông tin chi tiết từ bài báo: {title}, {link}")
