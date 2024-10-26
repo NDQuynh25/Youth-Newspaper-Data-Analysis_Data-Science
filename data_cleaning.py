@@ -1,6 +1,6 @@
 import csv
 import re
-
+from datetime import datetime, timezone, timedelta
 
 
 # Further expanding the Vietnamese stopwords list
@@ -64,6 +64,20 @@ def normalize_start_value(start):
             # Trường hợp không thể chuyển đổi, trả về 0
             return 0
         
+def convert_to_minutes(time_str, epoch=datetime(2003, 1, 1, tzinfo=timezone.utc)):
+    
+    # Chuyển chuỗi thời gian thành datetime và thêm timezone thủ công
+    if time_str.strip().endswith("GMT+7"):
+        time_str = time_str.replace("GMT+7", "+0700").strip()
+        time_obj = datetime.strptime(time_str, "%d/%m/%Y %H:%M %z")
+        
+        minutes_from_epoch = int((time_obj - epoch).total_seconds() / 60)
+        
+        return minutes_from_epoch
+    else:
+        return None
+
+        
 with open('2_output_details.csv', mode='r', newline='', encoding='utf-8') as file:
     reader = csv.reader(file)
     next(reader)  # Bỏ qua dòng tiêu đề
@@ -80,7 +94,7 @@ with open('2_output_details.csv', mode='r', newline='', encoding='utf-8') as fil
             category = normalize_text(row[2])
             summary = remove_more_stopwords(normalize_text(row[3]))
             author = normalize_text(row[4])
-            publish_date = normalize_text(row[5])
+            publish_date = convert_to_minutes(row[5])
             start = normalize_start_value(normalize_text(row[6]))
             content = remove_more_stopwords(normalize_text(row[7]))
 
