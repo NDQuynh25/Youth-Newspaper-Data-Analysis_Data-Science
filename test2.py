@@ -1,67 +1,55 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
-import time
-import requests
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
-# Thiết lập Selenium với các tùy chọn
-options = Options()
-options.add_argument("--ignore-certificate-errors")  
-options.add_argument("--allow-insecure-localhost")  
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+# Đọc dữ liệu
+file_path = "preprocessed_data/preprocessed_all.csv"  # Đường dẫn đến file dữ liệu
+data = pd.read_csv(file_path)
 
-# URL của bài báo
-url = "https://tuoitre.vn/tai-lien-hiep-quoc-iran-to-israel-dung-bom-nang-hon-2-000kg-cua-my-de-khong-kich-lebanon-20240928064428659.htm"
+# Kết hợp các cột văn bản (Title, Description, Content)
+data['combined_text'] = data['Title'] + " " + data['Description'] + " " + data['Content']
 
-# Mở trang web
-driver.get(url)
+# Loại bỏ các dòng có giá trị NaN trong cột 'combined_text'
+data = data.dropna(subset=['combined_text'])
 
-# Chờ trang tải (tùy chỉnh thời gian này nếu cần)
-time.sleep(3)
+# Mã hóa nhãn Category thành số
+from sklearn.preprocessing import LabelEncoder
+label_encoder = LabelEncoder()
+data['Category_encoded'] = label_encoder.fit_transform(data['Category'])
 
-# Lấy nội dung trang HTML
-html = driver.page_source
+# Tách dữ liệu thành các biến đầu vào và nhãn
+X = data['combined_text']
+y = data['Category_encoded']
 
-# Phân tích nội dung HTML với BeautifulSoup
-soup = BeautifulSoup(html, 'html.parser')
+# Chia dữ liệu thành tập huấn luyện và tập kiểm tra
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-# Thể loại
-category = soup.find('div', class_='detail-cate').text.strip()
-print(f"Thể loại: {category}")
+# Biến đổi văn bản thành vector TF-IDF
+tfidf_vectorizer = TfidfVectorizer(max_features=5000)
+X_train_tfidf = tfidf_vectorizer.fit_transform(X_train)
+X_test_tfidf = tfidf_vectorizer.transform(X_test)
 
-# Lấy tiêu đề bài báo
-title = soup.find('h1', class_='detail-title article-title').text.strip()
-print(f"Tiêu đề: {title}")
+# Xây dựng mô hình KNN
+k = 5  # Số lượng láng giềng gần nhất
+knn_model = KNeighborsClassifier(n_neighbors=k)
 
-# Lấy tóm tắt bài báo
-summary = soup.find('h2', class_='detail-sapo').text.strip()
-print(f"Tóm tắt: {summary}")
+# Huấn luyện mô hình
+knn_model.fit(X_train_tfidf, y_train)
 
-# Lấy tác giả bài báo
-author = soup.find('a', class_='name').text.strip()
-print(f"Tác giả: {author}")
+# Dự đoán trên tập kiểm tra
+y_pred = knn_model.predict(X_test_tfidf)
 
-# Thời gian đăng
-publish_date = soup.find('div', class_='detail-time').text.strip()
-print(f"Thời gian đăng: {publish_date}")
+# Đánh giá mô hình
+accuracy = accuracy_score(y_test, y_pred)
+print(f"KNN Accuracy: {accuracy * 100:.2f}%")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
 
-# Điểm bài viết
-start = soup.find('span', class_='showtotalreactuser').text.strip()
-print(f"Điểm bài viết: {start}")
-
-# Loại bỏ các phần tử không cần thiết
-tags = []
-tags += soup.find_all('figcaption')
-tags += soup.find_all('div', class_='VCSortableInPreviewMode')
-if tags:
-    [tag.decompose() for tag in tags]
-
-# Nội dung bài báo
-content = soup.find('div', class_='detail-content afcbc-body').text.strip()
-print(f"Nội dung: {content}")
-
-# Đóng trình duyệt
-driver.quit()
+# Dự đoán chủ đề cho một đoạn văn bản mới
+new_text = "Enter your text here to classify"  # Đoạn văn bản mới để dự đoán
+new_text_tfidf = tfidf_vectorizer.transform([new_text])
+predicted_category_encoded = knn_model.predict(new_text_tfidf)
+predicted_category = label_encoder.inverse_transform(predicted_category_encoded)
+print(f"Predicted Category: {predicted_category[0]}")
